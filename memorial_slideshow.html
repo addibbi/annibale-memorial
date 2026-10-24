@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In Loving Memory — Annibale D'Elia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        stone: {
+                            50: '#fafaf9',
+                            100: '#f5f5f4',
+                            800: '#292524',
+                            900: '#1c1917',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body { height: 100%; }
+
+        /* One post at a time: the page itself never scrolls. */
+        body {
+            background-color: #0b0a09;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+            background-size: 32px 32px;
+            overflow: hidden;
+            color: #e7e5e4;
+        }
+
+        /* --- Image (left) ------------------------------------------------- */
+        #figure {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .photo {
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+            outline: 1px solid rgba(255, 255, 255, 0.08);
+            outline-offset: -1px;
+            user-select: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
+        }
+
+        /* Long posts scroll inside their column, never the page. */
+        .quote {
+            scrollbar-width: thin;
+            scrollbar-color: #44403c transparent;
+        }
+        .quote::-webkit-scrollbar { width: 6px; }
+        .quote::-webkit-scrollbar-thumb { background: #44403c; border-radius: 9999px; }
+
+        kbd {
+            font-family: inherit;
+            font-size: 0.75rem;
+            padding: 0.1rem 0.4rem;
+            border: 1px solid #3f3a37;
+            border-bottom-width: 2px;
+            border-radius: 0.35rem;
+            background: #1c1917;
+            color: #a8a29e;
+        }
+
+        /* When a post has no picture the image column collapses to zero
+           width, so the text takes the whole width. */
+        @media (max-width: 767px) {
+            .no-image #figure { display: none; }
+        }
+        @media (min-width: 768px) {
+            .no-image { grid-template-columns: 0px 1fr !important; }
+            .no-image #card { max-width: 46rem; margin-inline: auto; width: 100%; }
+        }
+    </style>
+</head>
+<body class="text-stone-200 antialiased">
+
+    <div class="h-full flex flex-col">
+
+        <!-- Header -->
+        <header class="shrink-0 w-full max-w-[1600px] mx-auto px-6 md:px-10 pt-6 md:pt-8 pb-2 flex items-end justify-between gap-6">
+            <div>
+                <p class="text-stone-500 uppercase tracking-[0.2em] text-[0.7rem] md:text-xs mb-1">PER ANNIBALE</p>
+
+            </div>
+            <p id="counter" class="text-stone-500 text-sm tabular-nums whitespace-nowrap"></p>
+        </header>
+
+        <!-- Post -->
+        <main class="flex-1 min-h-0 w-full max-w-[1600px] mx-auto px-4 md:px-10 pb-2">
+            <div id="grid" class="h-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 items-stretch">
+
+                <!-- Image, left -->
+                <figure id="figure" class="relative h-full min-h-[38vh] md:min-h-0">
+                    <img id="photo" class="photo" alt="">
+                </figure>
+
+                <!-- Text, right -->
+                <article id="card" class="h-full min-h-0 flex flex-col">
+                    <blockquote id="text"
+                        class="quote font-serif text-lg md:text-2xl leading-relaxed md:leading-relaxed text-stone-200 whitespace-pre-line my-auto overflow-y-auto pr-2"></blockquote>
+
+                    <div class="mt-6 md:mt-8 pt-4 border-t border-white/10 flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <a id="author-link" href="#" target="_blank" rel="noopener noreferrer"
+                               class="font-medium text-stone-100 hover:text-stone-400 transition-colors duration-200 truncate block">
+                                <span id="author"></span>
+                            </a>
+                            <span id="date" class="block text-[0.7rem] text-stone-500 mt-1 uppercase tracking-wider"></span>
+                        </div>
+                        <a id="permalink" href="#" target="_blank" rel="noopener noreferrer"
+                           class="shrink-0 text-stone-600 hover:text-stone-300 transition-colors"
+                           title="Apri il post originale">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+            </div>
+        </main>
+
+        <!-- Footer / hint -->
+        <footer class="shrink-0 w-full py-3 md:py-4 px-6 text-center text-stone-500 text-xs font-light">
+            <p id="hint">Premi <kbd>→</kbd> per il ricordo successivo</p>
+        </footer>
+    </div>
+
+    <script>
+        // Same store the gallery reads: one JSON object per line, written by
+        // import_console_dump.py. A plain JSON array is accepted too.
+        const DATA_URL = 'data/posts.jsonl';
+
+        const els = {
+            grid: document.getElementById('grid'),
+            figure: document.getElementById('figure'),
+            photo: document.getElementById('photo'),
+            card: document.getElementById('card'),
+            text: document.getElementById('text'),
+            author: document.getElementById('author'),
+            authorLink: document.getElementById('author-link'),
+            date: document.getElementById('date'),
+            permalink: document.getElementById('permalink'),
+            counter: document.getElementById('counter'),
+            hint: document.getElementById('hint'),
+        };
+
+        const state = { posts: [], i: 0 };
+
+        function parsePosts(text) {
+            const trimmed = text.trim();
+            if (!trimmed) return [];
+            if (trimmed.startsWith('[')) return JSON.parse(trimmed);                  // JSON array
+            return trimmed.split('\n').filter(l => l.trim()).map(l => JSON.parse(l)); // JSONL
+        }
+
+        async function loadPosts() {
+            const res = await fetch(DATA_URL, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status} per ${DATA_URL}`);
+            return parsePosts(await res.text());
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        /** Pick the fields the view needs; drop rows with neither words nor picture. */
+        function normalise(posts) {
+            return posts
+                .map(post => {
+                    const img = (post.media || []).find(m => m.type === 'image' && (m.local_path || m.url));
+                    return {
+                        text: (post.text || '').trim(),
+                        author: post.author || 'Anonimo',
+                        authorUrl: post.author_url && post.author_url !== '#' ? post.author_url : null,
+                        permalink: post.permalink || null,
+                        image: img ? (img.local_path || img.url) : null,
+                        alt: (img && img.alt) || '',
+                        date: post.time_text || formatDate(post.collected_at),
+                    };
+                })
+                .filter(p => p.text || p.image);
+        }
+
+        function preload(post) {
+            if (post && post.image) new Image().src = post.image;
+        }
+
+        function applyPostMeta(post) {
+            // textContent, so nothing written on Facebook is treated as markup.
+            els.text.textContent = post.text;
+            els.text.scrollTop = 0;
+
+            els.author.textContent = post.author;
+            if (post.authorUrl) {
+                els.authorLink.href = post.authorUrl;
+                els.authorLink.classList.remove('pointer-events-none');
+            } else {
+                els.authorLink.removeAttribute('href');
+                els.authorLink.classList.add('pointer-events-none');
+            }
+
+            els.date.textContent = post.date || '';
+
+            if (post.permalink) {
+                els.permalink.href = post.permalink;
+                els.permalink.classList.remove('hidden');
+            } else {
+                els.permalink.classList.add('hidden');
+            }
+        }
+
+        function render() {
+            const post = state.posts[state.i];
+            if (!post) return;
+
+            els.grid.classList.toggle('no-image', !post.image);
+
+            if (post.image) {
+                els.photo.src = post.image;
+                els.photo.alt = post.alt || '';
+            } else {
+                els.photo.removeAttribute('src');
+                els.photo.alt = '';
+            }
+
+            applyPostMeta(post);
+
+            els.counter.textContent = `${state.i + 1} / ${state.posts.length}`;
+
+            const last = state.i === state.posts.length - 1;
+            els.hint.innerHTML = last
+                ? 'Ultimo ricordo · <kbd>←</kbd> per tornare indietro'
+                : 'Premi <kbd>→</kbd> per il ricordo successivo · <kbd>←</kbd> per il precedente';
+
+            preload(state.posts[state.i + 1]);
+        }
+
+        function go(index) {
+            const next = Math.max(0, Math.min(index, state.posts.length - 1));
+            if (next === state.i) return;
+            state.i = next;
+            render();
+        }
+
+        const nextPost = () => go(state.i + 1);
+        const prevPost = () => go(state.i - 1);
+
+        document.addEventListener('keydown', (event) => {
+            const k = event.key;
+
+            // Let Enter/Space activate a focused link (author, original post)
+            // instead of silently advancing.
+            const interactive = event.target && event.target.closest
+                && event.target.closest('a, button, input, textarea, select');
+            if (interactive && (k === 'Enter' || k === ' ')) return;
+
+            if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'Enter') {
+                event.preventDefault();
+                nextPost();
+            } else if (k === 'ArrowLeft' || k === 'ArrowUp') {
+                event.preventDefault();
+                prevPost();
+            } else if (k === 'Home') {
+                event.preventDefault();
+                go(0);
+            } else if (k === 'End') {
+                event.preventDefault();
+                go(state.posts.length - 1);
+            }
+        });
+
+        function showMessage(html) {
+            els.text.textContent = '';
+            els.card.innerHTML =
+                `<div class="my-auto text-stone-400 text-sm leading-relaxed">${html}</div>`;
+        }
+
+        async function init() {
+            try {
+                state.posts = normalise(await loadPosts());
+                if (!state.posts.length) {
+                    showMessage('Nessun ricordo da mostrare.');
+                    return;
+                }
+                render();
+            } catch (err) {
+                // file:// blocks fetch(); say so instead of showing a blank page.
+                showMessage(`
+                    <strong class="block mb-2 text-stone-100">Impossibile caricare ${DATA_URL}</strong>
+                    ${err.message}<br><br>
+                    Apri questa pagina da un server locale, non con doppio clic:
+                    <code class="block mt-2 p-3 bg-white/5 rounded select-all">python3 -m http.server 8899</code>
+                    poi vai su <code>http://localhost:8899/memorial_slideshow.html</code>.
+                `);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

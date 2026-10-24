@@ -1,0 +1,3 @@
+# Only needed by import_console_dump.py, to download the images.
+# Its HTTP request client is used — no browser, no `playwright install`.
+playwright>=1.47

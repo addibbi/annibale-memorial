@@ -1,0 +1,7 @@
+# machine-local, never share
+.venv/
+__pycache__/
+.DS_Store
+
+# transient
+data/*.tmp
