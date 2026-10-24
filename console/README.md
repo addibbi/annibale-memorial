@@ -1,171 +1,155 @@
-# DevTools console scraper
+# Raccogliere i ricordi da Facebook
 
-`fb_scrape_console.js` collects posts from whatever Facebook page you already
-have open, using the tab's own session. No Playwright, no relaunch, no profile
-copying, no debugging port.
+`fb_scrape_console.js` legge i messaggi dalla pagina Facebook che hai già aperto
+nel browser. Non serve installare niente: si incolla nella **Console** del
+browser, uno strumento che Chrome ha già dentro.
 
-## Quickstart
+Funziona con la sessione del browser, cioè con il tuo accesso: vede solo quello
+che vedi tu. Non fa login al posto tuo e non tocca il tuo profilo Facebook.
 
-1. Open the page you want to scrape (home feed, search results, group, profile).
-2. <kbd>Cmd</kbd>+<kbd>Opt</kbd>+<kbd>J</kbd> to open DevTools → **Console**.
-3. Chrome blocks pasted code on the first use. Type `allow pasting` and press
-   <kbd>Enter</kbd>.
-4. Paste the whole of `fb_scrape_console.js` and press <kbd>Enter</kbd>. It only
-   defines the API — nothing runs until you ask it to.
+Le foto non vengono scaricate qui (Chrome blocca i download automatici): il file
+che ottieni contiene i messaggi e i collegamenti alle foto, e le foto vere si
+scaricano dopo con `import_console_dump.py` (vedi il README principale).
 
-**Option A — the page is already scrolled, you just want the file:**
+---
 
-```js
-fbScrape.dump()      // parses what is mounted and downloads the JSON
-```
+## Come si parte
 
-**Option B — let it scroll and collect:**
+1. Apri la pagina che vuoi raccogliere: il profilo, un gruppo, i risultati di una
+   ricerca, la home.
+2. Premi <kbd>Cmd</kbd>+<kbd>Opt</kbd>+<kbd>J</kbd> per aprire la Console. (In
+   alternativa: menu *Visualizza → Sviluppatore → Console JavaScript*.)
+3. La prima volta Chrome blocca il testo incollato: scrivi `allow pasting` e premi
+   <kbd>Invio</kbd>.
+4. Copia **tutto** il contenuto di `fb_scrape_console.js`, incollalo nella Console
+   e premi <kbd>Invio</kbd>. Non succede niente: viene solo caricato il comando,
+   che userai al punto dopo.
+5. Scrivi `fbScrape.run()` e premi <kbd>Invio</kbd>. La pagina comincia a scorrere
+   da sola e la Console mostra l'avanzamento:
 
-```js
-fbScrape.run()       // logs: [fbScrape] round 004  +6  total 31  idle 0/8
-```
-
-5. Then merge it into the store and pull the images:
-
-   ```bash
-   python3 import_console_dump.py ~/Downloads/fb_posts_....json
+   ```
+   [fbScrape] round 004  +6  total 31  idle 0/8
    ```
 
-   Fetching the images needs `playwright` (`pip install -r requirements.txt`) for
-   its HTTP request client only — no browser, no Chrome profile. Without it,
-   `--media none` still merges the posts and skips the files.
+   `total` è quanti ricordi ha raccolto finora. `idle` conta gli scorrimenti di
+   fila senza niente di nuovo.
+6. Quando ha finito, **salvali in un file**:
 
-`dump()` writes the JSON only; call `fbScrape.saveCSV()` afterwards if you want the
-spreadsheet version of the same data.
+   ```js
+   fbScrape.saveJSON()
+   ```
 
-## Already scrolled the page yourself?
+   Si scarica `fb_posts_<data>.json` nella cartella *Download*. È quel file che
+   serve per l'importazione.
 
-Use `fbScrape.dump()`. It parses the DOM as it stands, no scrolling, and downloads
-the JSON.
+> `run()` non salva da solo: alla fine lo ricorda in Console scrivendo
+> `next: fbScrape.saveJSON()`. Se chiudi la pagina prima di salvarlo, il lavoro
+> resta solo nella memoria della pagina.
 
-**But check the number it prints first.** Facebook unmounts posts that are far
-off-screen, so the DOM usually holds a window of posts — often 15–40 — not
-everything you passed on the way down. `dump()` logs:
+## I due modi di raccogliere
+
+| comando | cosa fa |
+| --- | --- |
+| `fbScrape.run()` | **consigliato.** Scorre la pagina e raccoglie man mano. |
+| `fbScrape.dump()` | Salva solo quello che è già nella pagina in questo momento, senza scorrere. Scarica il file da solo. |
+
+`dump()` serve se hai già scorso la pagina a mano. Attenzione però: Facebook
+toglie dalla pagina i messaggi che sono molto in alto, quindi il DOM contiene solo
+una finestra di messaggi (spesso 15–40), non tutti quelli che hai visto passando.
+`dump()` scrive quanti ne ha trovati:
 
 ```
 [fbScrape] dump: 24 in the DOM, 24 new, 24 collected in total
 ```
 
-If that is fewer than you expected, the rest is no longer in the page and cannot be
-read; use `fbScrape.run()` so posts are captured while they are still mounted.
+Se il numero è più basso di quello che ti aspettavi, gli altri non sono più nella
+pagina e non si possono leggere: usa `run()`, che li cattura mentre sono ancora
+visibili.
 
-## Console API
+## Tutti i comandi
 
-| call | does |
+| comando | cosa fa |
 | --- | --- |
-| `fbScrape.run(opts)` | start (or resume) collecting; merges into the same list |
-| `fbScrape.dump()` | one-shot: parse the DOM as-is, persist, download JSON |
-| `fbScrape.stop()` | stop after the current round |
-| `fbScrape.reset()` | clear the collection, dedupe set **and** the saved copy |
-| `fbScrape.posts()` | the live array (`window.__fbPosts`) |
-| `fbScrape.saveJSON()` / `saveCSV()` / `copyJSON()` | export |
-| `fbScrape.persist()` | force a write to `localStorage` now |
-| `fbScrape.restore()` | reload a saved collection after a reload/crash |
-| `fbScrape.savedInfo()` | `{ count, savedAt, url }` or `null` |
-| `fbScrape.clearSaved()` | drop the saved copy without touching memory |
-| `fbScrape.extract()` | one-off parse of the current DOM, no scrolling |
-| `fbScrape.ingest(batch)` | dedupe + stamp a batch (what `run()` uses internally) |
-| `fbScrape.config` | default limits |
+| `fbScrape.run(opzioni)` | inizia (o riprende) la raccolta |
+| `fbScrape.dump()` | salva subito quello che c'è nella pagina, e scarica il file |
+| `fbScrape.stop()` | ferma la raccolta dopo il giro in corso |
+| `fbScrape.saveJSON()` | scarica il file `.json` (quello che serve per importare) |
+| `fbScrape.saveCSV()` | scarica la versione foglio di calcolo |
+| `fbScrape.copyJSON()` | copia il JSON negli appunti |
+| `fbScrape.posts()` | l'elenco dei ricordi raccolti finora |
+| `fbScrape.restore()` | recupera la raccolta dopo un ricaricamento della pagina |
+| `fbScrape.savedInfo()` | dice se c'è una raccolta salvata, quanti ricordi e quando |
+| `fbScrape.clearSaved()` | cancella la copia salvata |
+| `fbScrape.reset()` | ricomincia da zero (cancella anche la copia salvata) |
+| `fbScrape.extract()` | legge la pagina una volta sola, senza scorrere |
 
-Tune a run:
+## Regolare la raccolta
 
-```js
-fbScrape.run({ maxPosts: 200, idleLimit: 5, delayMin: 2000, delayMax: 4000 })
-```
-
-Defaults: `maxPosts` 500, `maxScrolls` 300, `idleLimit` 8, delay 1.2–2.8 s.
-
-## Scaling to hundreds of posts
-
-The defaults already allow 500. For a longer run:
+Di solito non serve toccare niente: i valori predefiniti vanno bene fino a 500
+ricordi. Se ti servono più ricordi:
 
 ```js
 fbScrape.run({ maxPosts: 1000, idleLimit: 15, delayMin: 2000, delayMax: 3500 })
 ```
 
-- **`idleLimit` matters more than `maxPosts`.** Search results and slow feeds often
-  go several scrolls with nothing new while the next batch loads; if a run stops
-  early, raise this first.
-- **`maxScrolls`** (default 300) is the backstop when each scroll only yields 1–2 posts.
-  Raise it for tall pages: a 190,000 px search page needs ~200 rounds.
-- **Slower is safer.** Stretch the delay for long sessions rather than hammering.
-- **Keep the tab visible** — Chrome throttles timers in background tabs.
-
-Two settings exist because feeds are virtualised:
-
-| option | default | why |
+| opzione | predefinito | a cosa serve |
 | --- | --- | --- |
-| `startFromTop` | `true` | rewinds first; posts only render when they pass through the viewport, so starting mid-page silently loses everything above |
-| `stepRatio` | `0.9` | scrolls by one viewport per round — jumping to `scrollHeight` skips the posts in between and they never render |
+| `maxPosts` | 500 | quanti ricordi fermarsi a raccogliere |
+| `maxScrolls` | 300 | quanti scorrimenti al massimo |
+| `idleLimit` | 8 | si ferma dopo N scorrimenti senza niente di nuovo |
+| `delayMin` / `delayMax` | 1200 / 2800 ms | pausa fra uno scorrimento e l'altro |
 
-Search results need one extra behaviour, which the extractor already handles: they
-render posts as bare children of `div[role="feed"]` with **no `role="article"`**, so
-`role="article"` alone finds only the first few. Children carrying a post message
-node (`[data-ad-preview]` / `[data-ad-comet-preview]`) are picked up too.
+- **`idleLimit` è la cosa da alzare per prima.** Su ricerche e pagine lente
+  capita di fare diversi scorrimenti a vuoto mentre Facebook carica il resto: se
+  la raccolta si ferma troppo presto, aumenta questo numero.
+- **`maxScrolls`** serve quando ogni scorrimento porta solo 1–2 ricordi: alzalo
+  per pagine molto lunghe.
+- **Più lento è più sicuro.** Per raccolte lunghe allunga la pausa invece di
+  martellare la pagina.
+- **Tieni la scheda in primo piano.** Chrome rallenta i timer delle schede in
+  secondo piano e le pause si allungano.
 
-## Driving it from the terminal
+## Se qualcosa va storto
 
-If you'd rather not paste, enable **View → Developer → Allow JavaScript from Apple
-Events**, then Chrome will execute JS on your behalf:
+**Ho ricaricato la pagina e ho perso tutto.** La raccolta viene salvata nella
+memoria del browser ogni pochi secondi. Dopo aver ricaricato e reincollato il
+file, scrivi:
+
+```js
+fbScrape.restore()
+```
+
+**La Console avvisa che lo spazio è finito.** La copia salvata si ferma intorno ai
+4 MB di JSON (più o meno 1000–2000 ricordi): da lì in poi bisogna salvare il file
+con `fbScrape.saveJSON()`.
+
+**La raccolta si ferma sempre allo stesso punto.** Di solito è Facebook che ha
+finito i risultati (una ricerca finisce, una pagina smette di caricare), non un
+errore dello script: salva con `saveJSON()`, importa, e se serve riparti con un
+altro giro.
+
+## Due cose che sembrano strane ma sono volute
+
+- **Riparte sempre dall'inizio** (`startFromTop`). I messaggi vengono disegnati
+  solo quando passano davanti allo schermo: partendo a metà pagina si perderebbe
+  in silenzio tutto quello che sta sopra.
+- **Scorre di una schermata alla volta** (`stepRatio` 0.9). Saltare in fondo
+  salterebbe i messaggi intermedi, che non verrebbero mai disegnati e quindi mai
+  letti.
+
+I risultati di una ricerca, poi, non sono nella pagina come i normali messaggi:
+lo script li riconosce lo stesso, non devi fare niente.
+
+## (Avanzato) Mandare i comandi dal Terminale
+
+Se preferisci non incollare, puoi far eseguire il codice dal Terminale: apri
+*Visualizza → Sviluppatore → Consenti JavaScript dagli eventi Apple*, poi:
 
 ```bash
 osascript -e 'tell application "Google Chrome" to execute (active tab of front window) javascript "fbScrape.posts().length"'
 ```
 
-That's how this repo's collection was actually run: load the snippet from disk with
-`(read POSIX file ".../console/fb_scrape_console.js" as «class utf8»)`, start
-`fbScrape.run(...)`, poll `fbScrape.posts().length`, then write
-`JSON.stringify(fbScrape.posts())` straight to a file. Turn the setting back off
-afterwards — while it is on, any script on the machine can drive that tab.
-
-Progress is mirrored into `localStorage` between rounds (throttled to every 5 s), so
-a reload or crash doesn't cost you the run:
-
-```js
-fbScrape.restore()    // after reloading the page, bring back what was collected
-fbScrape.savedInfo()  // { count, savedAt, url }
-```
-
-The saved copy is capped at ~4 MB of JSON (roughly 1000–2000 posts depending on
-text length). Beyond that the snippet warns once and points you at `saveJSON()`.
-
-The practical ceiling is what the page will give you: a search eventually runs out
-of matches and a feed tail stops loading, so the `idleLimit` stop is usually
-Facebook's limit rather than the script's. Use `saveJSON()` + `import_console_dump.py`
-and start another run if you need more.
-
-## Why images are imported rather than downloaded here
-
-The snippet runs in the page, so it *can* see the image URLs, but Chrome blocks
-bulk automatic downloads from script without a permission prompt, and canvas
-export depends on CORS headers from `scontent`. Instead the JSON is imported and
-`import_console_dump.py` fetches the bytes with `fbstore.py`'s downloader.
-
-FB's CDN links are signed and expire within days, so import the JSON the same
-day. If you sit on it, expect `http 403` in `download_error`.
-
-## Limits
-
-- **Long posts stay clipped.** Facebook renders `… See more` and the body ends
-  there; the snippet strips that marker so it doesn't pollute `text`, but it does
-  not click it. Clicking every one would fight the scroll and is much slower.
-- **If a run stops early**, watch for
-  `[fbScrape] the page stopped scrolling`. That's Facebook ending the results, not
-  a parse failure — scroll once by hand and call `fbScrape.run()` again to continue.
-- **Reloading or navigating kills the loop.** The JavaScript context dies with the page.
-  Progress is mirrored to `localStorage`, so `fbScrape.restore()` gets it back — but
-  `saveJSON()` is still the only durable export.
-- **No resume across browser restarts.** `localStorage` is per-origin and survives
-  relaunches, so restore usually works — but treat the JSON dump as the source of truth.
-- **Background tabs are throttled** by Chrome; keep the tab visible or the
-  delays stretch out.
-- **Re-pasting is safe.** The whole file is an IIFE, so you won't hit
-  `Identifier ... has already been declared`.
-- **DevTools Snippets** also work (Sources → Snippets): persist the file there
-  for one-click re-runs. Snippets are classic scripts, so there's no top-level
-  `await` — the IIFE shape already handles that.
+Così si può caricare lo script da disco, avviare `fbScrape.run(...)`, controllare
+ogni tanto quanti ricordi ci sono e scrivere il risultato direttamente in un file.
+Quando hai finito **rimetti quell'impostazione su off**: finché è attiva, qualsiasi
+script del computer può comandare quella scheda.

@@ -94,8 +94,9 @@ Si fa in due passi.
 1. **Raccogliere** dal browser: apri la pagina Facebook, premi
    <kbd>Cmd</kbd>+<kbd>Opt</kbd>+<kbd>J</kbd>, incolla tutto il contenuto di
    `console/fb_scrape_console.js`, premi <kbd>Invio</kbd>, poi scrivi
-   `fbScrape.run()` e premi <kbd>Invio</kbd>. Alla fine si scarica un file
-   `fb_posts_....json` nella cartella *Download*.
+   `fbScrape.run()` e premi <kbd>Invio</kbd>. Quando ha finito, scrivi
+   `fbScrape.saveJSON()`: si scarica un file `fb_posts_....json` nella cartella
+   *Download*.
 2. **Importare** dal Terminale (nella cartella dei ricordi):
 
    ```
