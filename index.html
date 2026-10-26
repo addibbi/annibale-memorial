@@ -378,11 +378,16 @@
             if (location.hash !== want) history.replaceState(null, '', want);
         }
 
-        /** Jump to whatever the URL points at. False when there is no usable id. */
-        function goToHash() {
+        /** The slide index the URL points at, or -1. */
+        function indexFromHash() {
             const id = hashId();
-            if (!id) return false;
-            const index = state.posts.findIndex(p => p.id === id);
+            if (!id) return -1;
+            return state.posts.findIndex(p => p.id === id);
+        }
+
+        /** Follow a hash change. False when the id is unknown. */
+        function goToHash() {
+            const index = indexFromHash();
             if (index < 0) return false;
             if (index !== state.i) {
                 state.i = index;
@@ -750,7 +755,11 @@
                     return;
                 }
                 // A link like .../#fb_123 opens straight on that memory.
-                if (!goToHash()) render();
+                // render() always runs: when the link points at the first slide,
+                // state.i is already 0 and goToHash() alone would paint nothing.
+                const fromHash = indexFromHash();
+                state.i = fromHash >= 0 ? fromHash : 0;
+                render();
                 syncHash();
             } catch (err) {
                 // file:// blocks fetch(); say so instead of showing a blank page.
