@@ -214,28 +214,31 @@
             </div>
         </main>
 
-        <!-- Footer: big tap targets on phones, key hints on desktop -->
+        <!-- Footer: arrows on every screen; on desktop they sit either side of
+             the key hint, on phones they go to the two outer edges. -->
         <footer class="shrink-0 w-full py-2 md:py-4 px-4 md:px-6">
-            <div class="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4">
+            <div class="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 md:justify-center md:gap-5">
                 <button id="prev" type="button" aria-label="Ricordo precedente"
-                        class="md:hidden flex h-12 w-12 shrink-0 items-center justify-center rounded-full
-                               border border-white/10 bg-white/5 text-stone-300 transition-colors
-                               active:bg-white/20 disabled:opacity-25">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        class="flex h-12 w-12 md:h-10 md:w-10 shrink-0 cursor-pointer items-center justify-center
+                               rounded-full border border-white/10 bg-white/5 text-stone-300 transition-colors
+                               hover:border-white/25 hover:bg-white/10 hover:text-stone-100
+                               active:bg-white/20 disabled:cursor-default disabled:opacity-25 disabled:hover:border-white/10 disabled:hover:bg-white/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
 
-                <p id="hint" class="hidden md:block flex-1 text-center text-stone-500 text-xs font-light">
+                <p id="hint" class="hidden md:block text-center text-stone-500 text-xs font-light">
                     Premi <kbd>→</kbd> per il ricordo successivo
                 </p>
 
                 <button id="next" type="button" aria-label="Ricordo successivo"
-                        class="md:hidden flex h-12 w-12 shrink-0 items-center justify-center rounded-full
-                               border border-white/10 bg-white/5 text-stone-300 transition-colors
-                               active:bg-white/20 disabled:opacity-25">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        class="flex h-12 w-12 md:h-10 md:w-10 shrink-0 cursor-pointer items-center justify-center
+                               rounded-full border border-white/10 bg-white/5 text-stone-300 transition-colors
+                               hover:border-white/25 hover:bg-white/10 hover:text-stone-100
+                               active:bg-white/20 disabled:cursor-default disabled:opacity-25 disabled:hover:border-white/10 disabled:hover:bg-white/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
