@@ -103,6 +103,9 @@
             top: calc(100% + 0.5rem);
             width: min(26rem, 86vw);
             overflow-x: hidden;      /* long alt-text "dates" must not widen the panel */
+            /* Solid, not translucent: the post behind the panel is long text,
+               and anything see-through made the results unreadable. */
+            background-color: #14120f;
         }
         @media (max-width: 767px) {
             #results {
@@ -156,7 +159,7 @@
                               focus:border-white/25 focus:bg-white/10 transition-colors" />
                 <div id="results" role="listbox" aria-label="Risultati"
                      class="hidden z-50 max-h-[62vh] overflow-y-auto rounded-xl border border-white/10
-                            bg-[#141210]/98 shadow-2xl shadow-black/70 backdrop-blur"></div>
+                            shadow-2xl shadow-black/70"></div>
             </div>
         </header>
 
