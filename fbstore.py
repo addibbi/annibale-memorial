@@ -277,7 +277,7 @@ def export_csv(jsonl_path: Path, csv_path: Path) -> int:
     cols = [
         "id", "collected_at", "author", "author_url", "time_text", "permalink",
         "reactions", "comments", "shares", "media_count", "media_local", "media_urls",
-        "is_ad", "posinset", "text",
+        "is_ad", "posinset", "shared_author", "text", "shared_text",
     ]
     with csv_path.open("w", encoding="utf-8-sig", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")

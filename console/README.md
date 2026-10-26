@@ -66,6 +66,47 @@ Se il numero è più basso di quello che ti aspettavi, gli altri non sono più n
 pagina e non si possono leggere: usa `run()`, che li cattura mentre sono ancora
 visibili.
 
+## Post condivisi
+
+Chi ricorda Annibale spesso non lo nomina: condivide il post di qualcun altro, che
+lo nomina. Quei post vengono raccolti lo stesso, e il testo citato finisce in due
+campi separati:
+
+| campo | cosa contiene |
+| --- | --- |
+| `text` | quello che ha scritto chi condivide |
+| `shared_author` | chi ha scritto il post condiviso |
+| `shared_text` | il testo del post condiviso |
+
+Per cercare un nome conviene guardare tutti e due i campi. Nella presentazione il
+testo citato compare in fondo alla slide, dopo una freccia `↪`.
+
+## Pulizia
+
+Alla fine di `run()` (e di `dump()`) la raccolta si ripulisce da sola. Si
+**cancella** solo quello che non è un post:
+
+| cosa viene tolto | perché |
+| --- | --- |
+| post sponsorizzati | non sono ricordi |
+| post senza testo, senza testo citato e senza foto | non mostrano niente |
+
+Il resto non si cancella: si **marca**. Ogni post riceve `relevant`:
+
+| valore | significato |
+| --- | --- |
+| `true` | il nome compare, oppure il testo ha parole da ricordo ("mancherai", "Bollenti Spiriti", "non ci credo che te ne sia andato"…) |
+| `false` | viene dal **feed** e non ha nessuno dei due: la presentazione lo nasconde, il dato resta nel `.jsonl` |
+| assente | non giudicabile: post di una ricerca o di un profilo, oppure solo foto |
+
+La distinzione conta: un ricordo spesso non scrive il nome ("Un abbraccio
+grandissimo alla moglie Alessia…"). Un filtro per nome secco ne ha cancellati
+cinque veri, per questo ora si nasconde e non si distrugge. Ogni post porta anche
+`source` (`feed`, `search`, `post`, `page`): solo il feed viene marcato.
+
+Per rivedere tutto, anche il rumore: `fbScrape.clean()` non cancella i marcati, e
+`fbScrape.relevant(post)` dice cosa ne pensa la regola.
+
 ## Tutti i comandi
 
 | comando | cosa fa |

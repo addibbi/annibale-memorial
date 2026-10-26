@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In Loving Memory — Annibale D'Elia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        stone: {
+                            50: '#fafaf9',
+                            100: '#f5f5f4',
+                            800: '#292524',
+                            900: '#1c1917',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body { height: 100%; }
+
+        /* One post at a time: the page itself never scrolls. */
+        body {
+            background-color: #0b0a09;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+            background-size: 32px 32px;
+            overflow: hidden;
+            color: #e7e5e4;
+        }
+
+        /* --- Image (left) ------------------------------------------------- */
+        #figure {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .photo {
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+            outline: 1px solid rgba(255, 255, 255, 0.08);
+            outline-offset: -1px;
+            user-select: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
+        }
+
+        /* Long posts scroll inside their column, never the page. */
+        .quote {
+            scrollbar-width: thin;
+            scrollbar-color: #44403c transparent;
+        }
+        .quote::-webkit-scrollbar { width: 6px; }
+        .quote::-webkit-scrollbar-thumb { background: #44403c; border-radius: 9999px; }
+
+        kbd {
+            font-family: inherit;
+            font-size: 0.75rem;
+            padding: 0.1rem 0.4rem;
+            border: 1px solid #3f3a37;
+            border-bottom-width: 2px;
+            border-radius: 0.35rem;
+            background: #1c1917;
+            color: #a8a29e;
+        }
+
+        /* When a post has no picture the image column collapses to zero
+           width, so the text takes the whole width. */
+        @media (max-width: 767px) {
+            .no-image #figure { display: none; }
+        }
+        @media (min-width: 768px) {
+            .no-image { grid-template-columns: 0px 1fr !important; }
+            .no-image #card { max-width: 46rem; margin-inline: auto; width: 100%; }
+        }
+
+        /* --- search ------------------------------------------------------- */
+        /* Under the input on wide screens; on a phone the header is too narrow
+           to hang a panel off, so it spans the viewport instead. */
+        #results {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            width: min(26rem, 86vw);
+        }
+        @media (max-width: 767px) {
+            #results {
+                position: fixed;
+                left: 0.75rem;
+                right: 0.75rem;
+                top: 3.9rem;
+                width: auto;
+            }
+        }
+
+        /* The searched words, marked inside the result snippets. */
+        #results mark {
+            background: rgba(253, 230, 138, 0.16);
+            color: #fde68a;
+            border-radius: 0.15rem;
+            padding: 0 0.1rem;
+        }
+        #results::-webkit-scrollbar { width: 6px; }
+        #results::-webkit-scrollbar-thumb { background: #44403c; border-radius: 9999px; }
+        #results { scrollbar-width: thin; scrollbar-color: #44403c transparent; }
+        #results [aria-selected="true"] { background: rgba(255, 255, 255, 0.07); }
+        /* Chrome's own clear button on <input type=search> is invisible on dark. */
+        #search::-webkit-search-cancel-button { filter: invert(0.6); cursor: pointer; }
+    </style>
+</head>
+<body class="text-stone-200 antialiased">
+
+    <div class="h-full flex flex-col">
+
+        <!-- Header -->
+        <header class="shrink-0 w-full max-w-[1600px] mx-auto px-6 md:px-10 pt-6 md:pt-8 pb-2 flex items-end justify-between gap-4 md:gap-6">
+            <div>
+                <p class="text-stone-500 uppercase tracking-[0.2em] text-[0.7rem] md:text-xs mb-1">PER ANNIBALE</p>
+
+            </div>
+
+            <div class="flex items-center gap-3 md:gap-4 shrink-0">
+                <!-- Fuzzy search over the posts -->
+                <div id="search-wrap" class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500 pointer-events-none"
+                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                    </svg>
+                    <input id="search" type="search" autocomplete="off" spellcheck="false"
+                           placeholder="Cerca un ricordo…"
+                           aria-label="Cerca tra i ricordi, per testo o autore"
+                           class="w-36 sm:w-52 md:w-72 bg-white/5 border border-white/10 rounded-full pl-9 pr-3 py-1.5
+                                  text-sm text-stone-200 placeholder:text-stone-500 outline-none
+                                  focus:border-white/25 focus:bg-white/10 transition-colors" />
+                    <div id="results" role="listbox" aria-label="Risultati"
+                         class="hidden z-50 max-h-[62vh] overflow-y-auto rounded-xl border border-white/10
+                                bg-[#141210]/98 shadow-2xl shadow-black/70 backdrop-blur"></div>
+                </div>
+
+                <p id="counter" class="text-stone-500 text-sm tabular-nums whitespace-nowrap"></p>
+            </div>
+        </header>
+
+        <!-- Post -->
+        <main class="flex-1 min-h-0 w-full max-w-[1600px] mx-auto px-4 md:px-10 pb-2">
+            <div id="grid" class="h-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 items-stretch">
+
+                <!-- Image, left -->
+                <figure id="figure" class="relative h-full min-h-[38vh] md:min-h-0">
+                    <img id="photo" class="photo" alt="">
+                </figure>
+
+                <!-- Text, right -->
+                <article id="card" class="h-full min-h-0 flex flex-col">
+                    <blockquote id="text"
+                        class="quote font-serif text-lg md:text-2xl leading-relaxed md:leading-relaxed text-stone-200 whitespace-pre-line my-auto overflow-y-auto pr-2"></blockquote>
+
+                    <div class="mt-6 md:mt-8 pt-4 border-t border-white/10 flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <a id="author-link" href="#" target="_blank" rel="noopener noreferrer"
+                               class="font-medium text-stone-100 hover:text-stone-400 transition-colors duration-200 truncate block">
+                                <span id="author"></span>
+                            </a>
+                            <span id="date" class="block text-[0.7rem] text-stone-500 mt-1 uppercase tracking-wider"></span>
+                        </div>
+                        <a id="permalink" href="#" target="_blank" rel="noopener noreferrer"
+                           class="shrink-0 text-stone-600 hover:text-stone-300 transition-colors"
+                           title="Apri il post originale">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+            </div>
+        </main>
+
+        <!-- Footer / hint -->
+        <footer class="shrink-0 w-full py-3 md:py-4 px-6 text-center text-stone-500 text-xs font-light">
+            <p id="hint">Premi <kbd>→</kbd> per il ricordo successivo</p>
+        </footer>
+    </div>
+
+    <script>
+        // Same store the gallery reads: one JSON object per line, written by
+        // import_console_dump.py. A plain JSON array is accepted too.
+        const DATA_URL = 'data/posts.jsonl';
+
+        const els = {
+            grid: document.getElementById('grid'),
+            figure: document.getElementById('figure'),
+            photo: document.getElementById('photo'),
+            card: document.getElementById('card'),
+            text: document.getElementById('text'),
+            author: document.getElementById('author'),
+            authorLink: document.getElementById('author-link'),
+            date: document.getElementById('date'),
+            permalink: document.getElementById('permalink'),
+            counter: document.getElementById('counter'),
+            hint: document.getElementById('hint'),
+            search: document.getElementById('search'),
+            searchWrap: document.getElementById('search-wrap'),
+            results: document.getElementById('results'),
+        };
+
+        const state = { posts: [], i: 0 };
+
+        function parsePosts(text) {
+            const trimmed = text.trim();
+            if (!trimmed) return [];
+            if (trimmed.startsWith('[')) return JSON.parse(trimmed);                  // JSON array
+            return trimmed.split('\n').filter(l => l.trim()).map(l => JSON.parse(l)); // JSONL
+        }
+
+        async function loadPosts() {
+            const res = await fetch(DATA_URL, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status} per ${DATA_URL}`);
+            return parsePosts(await res.text());
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        /** Pick the fields the view needs; drop rows with neither words nor picture. */
+        function normalise(posts) {
+            return posts
+                // Relevance is a flag, not a deletion: flagged rows stay in the
+                // data and come back by clearing `relevant`.
+                .filter(post => post.relevant !== false)
+                .map(post => {
+                    const img = (post.media || []).find(m => m.type === 'image' && (m.local_path || m.url));
+                    // A share often names Annibale only in the quoted post; without
+                    // this the slide loses the only mention.
+                    const own = (post.text || '').trim();
+                    const shared = (post.shared_text || '').trim();
+                    const quoted = shared
+                        ? '\n\n↪ ' + (post.shared_author ? post.shared_author + ': ' : '') + shared
+                        : '';
+                    return {
+                        text: own + quoted,
+                        author: post.author || 'Anonimo',
+                        authorUrl: post.author_url && post.author_url !== '#' ? post.author_url : null,
+                        permalink: post.permalink || null,
+                        image: img ? (img.local_path || img.url) : null,
+                        alt: (img && img.alt) || '',
+                        date: post.time_text || formatDate(post.collected_at),
+                    };
+                })
+                .filter(p => p.text || p.image);
+        }
+
+        function preload(post) {
+            if (post && post.image) new Image().src = post.image;
+        }
+
+        function applyPostMeta(post) {
+            // textContent, so nothing written on Facebook is treated as markup.
+            els.text.textContent = post.text;
+            els.text.scrollTop = 0;
+
+            els.author.textContent = post.author;
+            if (post.authorUrl) {
+                els.authorLink.href = post.authorUrl;
+                els.authorLink.classList.remove('pointer-events-none');
+            } else {
+                els.authorLink.removeAttribute('href');
+                els.authorLink.classList.add('pointer-events-none');
+            }
+
+            els.date.textContent = post.date || '';
+
+            if (post.permalink) {
+                els.permalink.href = post.permalink;
+                els.permalink.classList.remove('hidden');
+            } else {
+                els.permalink.classList.add('hidden');
+            }
+        }
+
+        function render() {
+            const post = state.posts[state.i];
+            if (!post) return;
+
+            els.grid.classList.toggle('no-image', !post.image);
+
+            if (post.image) {
+                els.photo.src = post.image;
+                els.photo.alt = post.alt || '';
+            } else {
+                els.photo.removeAttribute('src');
+                els.photo.alt = '';
+            }
+
+            applyPostMeta(post);
+
+            els.counter.textContent = `${state.i + 1} / ${state.posts.length}`;
+
+            const last = state.i === state.posts.length - 1;
+            els.hint.innerHTML = last
+                ? 'Ultimo ricordo · <kbd>←</kbd> per tornare indietro'
+                : 'Premi <kbd>→</kbd> per il ricordo successivo · <kbd>←</kbd> per il precedente';
+
+            preload(state.posts[state.i + 1]);
+        }
+
+        function go(index) {
+            const next = Math.max(0, Math.min(index, state.posts.length - 1));
+            if (next === state.i) return;
+            state.i = next;
+            render();
+        }
+
+        const nextPost = () => go(state.i + 1);
+        const prevPost = () => go(state.i - 1);
+
+        /* =====================================================================
+           Search — fuzzy, over the post text (including a share's quoted text)
+           and the author. Hits appear in a small window under the input; one
+           click (or Enter) jumps to that slide.
+           ===================================================================== */
+        const SEARCH_MAX = 12;
+        let searchIndex = null;
+        let searchTokens = [];
+        let activeResult = -1;
+
+        const esc = (s) => String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+        /* Lowercase, NFKC (Facebook prints 𝗔𝗻𝗻𝗶𝗯𝗮𝗹𝗲 in unicode bold) and
+           strip accents, so "perche" finds "perché" and "cosi" finds "così". */
+        function norm(s) {
+            return (s || '').normalize('NFKC').toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        /* A substring match beats a scattered subsequence; earlier is better;
+           a longer word is worth more than a short one. -1 means "no match". */
+        function tokenScore(hay, tok) {
+            if (!hay) return -1;
+            const at = hay.indexOf(tok);
+            if (at >= 0) return 100 - Math.min(at, 40) * 0.5 + Math.min(tok.length, 12) * 2;
+
+            // Scattered letters are only a match if they are reasonably close
+            // together: "bllnt" can find "Bollenti", "zzzqqq" must not.
+            let pos = 0, gaps = 0, first = -1, last = -1;
+            for (const ch of tok) {
+                const p = hay.indexOf(ch, pos);
+                if (p < 0) return -1;
+                if (first < 0) first = p;
+                gaps += p - pos;
+                pos = p + 1;
+                last = p;
+            }
+            const span = last - first + 1;
+            if (gaps > tok.length * 2 + 6 || span > tok.length * 4 + 10) return -1;
+            return Math.max(1, 45 - Math.min(gaps, 20) * 1.5 - Math.min(first, 40) * 0.3);
+        }
+
+        function buildIndex() {
+            searchIndex = state.posts.map((post, i) => ({
+                i,
+                text: norm(post.text),
+                author: norm(post.author),
+                raw: post.text || '',
+                rawAuthor: post.author || '',
+                date: post.date || '',
+                image: post.image || '',
+            }));
+        }
+
+        function searchPosts(query) {
+            if (!searchIndex || searchIndex.length !== state.posts.length) buildIndex();
+            searchTokens = norm(query).split(/\s+/).filter(Boolean);
+            if (!searchTokens.length) return [];
+
+            const hits = [];
+            for (const rec of searchIndex) {
+                let score = 0, inAuthor = 0, ok = true;
+                for (const tok of searchTokens) {
+                    const st = tokenScore(rec.text, tok);
+                    const sa = tokenScore(rec.author, tok);
+                    const best = Math.max(st, sa);
+                    if (best < 0) { ok = false; break; }
+                    score += best;
+                    if (sa >= 0 && sa >= st) inAuthor++;
+                }
+                if (!ok) continue;
+                if (inAuthor === searchTokens.length) score += 25;  // the author matched every word
+                hits.push({ rec, score });
+            }
+            return hits.sort((a, b) => b.score - a.score || a.rec.i - b.rec.i);
+        }
+
+        /* Same normalisation as `norm`, but keeping a map from each normalised
+           character back to its offset in the original string. That is what
+           lets a hit on "così" be found by the query "cosi" and still be
+           highlighted in the original text. */
+        function normMap(s) {
+            let out = '';
+            const map = [];
+            let i = 0;
+            for (const ch of s) {
+                const n = ch.normalize('NFKC').toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                for (let k = 0; k < n.length; k++) { out += n[k]; map.push(i); }
+                i += ch.length;
+            }
+            return { out, map };
+        }
+
+        /* A window around the first hit, so a result shows *why* it matched
+           instead of always the opening line of the post. */
+        function snippetFor(raw) {
+            const SPAN = 170, PAD = 55;
+            const { out, map } = normMap(raw);
+
+            let hit = -1;
+            for (const tok of searchTokens) {
+                const p = out.indexOf(tok);
+                if (p >= 0 && (hit < 0 || p < hit)) hit = p;
+            }
+            if (hit < 0) {
+                return raw.slice(0, SPAN).replace(/\s+/g, ' ').trim() + (raw.length > SPAN ? '…' : '');
+            }
+
+            const start = Math.max(0, map[hit] - PAD);
+            const end = Math.min(raw.length, start + SPAN);
+            return (start > 0 ? '… ' : '')
+                + raw.slice(start, end).replace(/\s+/g, ' ').trim()
+                + (end < raw.length ? ' …' : '');
+        }
+
+        /* Wrap every occurrence of every word in <mark>, accent-insensitively. */
+        function highlighted(raw) {
+            const { out, map } = normMap(raw);
+            const ranges = [];
+            for (const tok of searchTokens) {
+                let from = 0, p;
+                while ((p = out.indexOf(tok, from)) >= 0) {
+                    const a = map[p];
+                    const b = p + tok.length < map.length
+                        ? Math.max(map[p + tok.length], map[p + tok.length - 1] + 1)
+                        : raw.length;
+                    if (b > a) ranges.push([a, b]);
+                    from = p + tok.length;
+                    if (ranges.length > 40) break;
+                }
+            }
+            if (!ranges.length) return esc(raw);
+
+            ranges.sort((a, b) => a[0] - b[0]);
+            let html = '', last = 0;
+            for (const [a, b] of ranges) {
+                if (b <= last) continue;
+                const from = Math.max(a, last);
+                html += esc(raw.slice(last, from)) + '<mark>' + esc(raw.slice(from, b)) + '</mark>';
+                last = b;
+            }
+            return html + esc(raw.slice(last));
+        }
+
+        function paintResults(hits, query) {
+            const box = els.results;
+            if (!query) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                activeResult = -1;
+                return;
+            }
+
+            if (!hits.length) {
+                box.innerHTML = `<div class="px-4 py-3 text-sm text-stone-500">Nessun ricordo per «${esc(query)}»</div>`;
+                box.classList.remove('hidden');
+                activeResult = -1;
+                return;
+            }
+
+            box.innerHTML = hits.slice(0, SEARCH_MAX).map(({ rec }) => {
+                const thumb = rec.image
+                    ? `<img src="${esc(rec.image)}" alt="" loading="lazy"
+                            class="h-11 w-11 rounded-md object-cover shrink-0 bg-stone-900">`
+                    : `<span class="h-11 w-11 rounded-md shrink-0 bg-white/5 border border-white/10"></span>`;
+                return `
+                    <button type="button" role="option" data-i="${rec.i}" aria-selected="false"
+                            class="w-full text-left px-3 py-2.5 flex gap-3 items-start border-b border-white/5 last:border-0
+                                   hover:bg-white/5 focus:outline-none transition-colors">
+                        ${thumb}
+                        <span class="min-w-0 flex-1">
+                            <span class="flex items-baseline gap-2">
+                                <span class="text-stone-100 text-sm font-medium truncate">${esc(rec.rawAuthor)}</span>
+                                <span class="text-[0.6rem] text-stone-500 uppercase tracking-wider shrink-0">${esc(rec.date)}</span>
+                            </span>
+                            <span class="mt-1 block text-[0.78rem] leading-snug text-stone-400">${highlighted(snippetFor(rec.raw))}</span>
+                        </span>
+                    </button>`;
+            }).join('') + (hits.length > SEARCH_MAX
+                ? `<div class="px-4 py-2 text-[0.7rem] text-stone-500">altri ${hits.length - SEARCH_MAX} ricordi</div>`
+                : '');
+
+            box.classList.remove('hidden');
+            activeResult = 0;
+            paintActive();
+        }
+
+        const resultButtons = () => Array.from(els.results.querySelectorAll('button[data-i]'));
+
+        function paintActive() {
+            resultButtons().forEach((b, n) => {
+                const on = n === activeResult;
+                b.setAttribute('aria-selected', on ? 'true' : 'false');
+                if (on) b.scrollIntoView({ block: 'nearest' });
+            });
+        }
+
+        function closeResults() {
+            els.results.classList.add('hidden');
+            els.results.innerHTML = '';
+            activeResult = -1;
+        }
+
+        function jumpTo(index) {
+            closeResults();
+            els.search.blur();
+            go(index);
+        }
+
+        function onSearchInput() {
+            const q = els.search.value.trim();
+            paintResults(q ? searchPosts(q) : [], q);
+        }
+
+        els.search.addEventListener('input', onSearchInput);
+
+        // Coming back to the box re-opens the last search instead of looking dead.
+        els.search.addEventListener('focus', () => {
+            if (els.search.value.trim()) onSearchInput();
+        });
+
+        els.search.addEventListener('keydown', (event) => {
+            const btns = resultButtons();
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                if (!btns.length) return;
+                event.preventDefault();
+                const dir = event.key === 'ArrowDown' ? 1 : -1;
+                activeResult = (activeResult + dir + btns.length) % btns.length;
+                paintActive();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                const target = btns[activeResult >= 0 ? activeResult : 0];
+                if (target) jumpTo(Number(target.dataset.i));
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                if (els.search.value) {
+                    els.search.value = '';
+                    onSearchInput();
+                } else {
+                    closeResults();
+                    els.search.blur();
+                }
+            }
+        });
+
+        els.results.addEventListener('click', (event) => {
+            const btn = event.target.closest('button[data-i]');
+            if (btn) jumpTo(Number(btn.dataset.i));
+        });
+
+        els.results.addEventListener('mousemove', (event) => {
+            const btn = event.target.closest('button[data-i]');
+            if (!btn) return;
+            const n = resultButtons().indexOf(btn);
+            if (n >= 0 && n !== activeResult) {
+                activeResult = n;
+                paintActive();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!els.searchWrap.contains(event.target)) closeResults();
+        });
+
+        // ⌘K / Ctrl-K opens the search from anywhere.
+        document.addEventListener('keydown', (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                els.search.focus();
+                els.search.select();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            const k = event.key;
+
+            // Everything typed in the search box belongs to the search box.
+            if (event.target && event.target.closest && event.target.closest('#search-wrap')) return;
+
+            // Let Enter/Space activate a focused link (author, original post)
+            // instead of silently advancing.
+            const interactive = event.target && event.target.closest
+                && event.target.closest('a, button, input, textarea, select');
+            if (interactive && (k === 'Enter' || k === ' ')) return;
+
+            if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'Enter') {
+                event.preventDefault();
+                nextPost();
+            } else if (k === 'ArrowLeft' || k === 'ArrowUp') {
+                event.preventDefault();
+                prevPost();
+            } else if (k === 'Home') {
+                event.preventDefault();
+                go(0);
+            } else if (k === 'End') {
+                event.preventDefault();
+                go(state.posts.length - 1);
+            }
+        });
+
+        function showMessage(html) {
+            els.text.textContent = '';
+            els.card.innerHTML =
+                `<div class="my-auto text-stone-400 text-sm leading-relaxed">${html}</div>`;
+        }
+
+        async function init() {
+            try {
+                state.posts = normalise(await loadPosts());
+                if (!state.posts.length) {
+                    showMessage('Nessun ricordo da mostrare.');
+                    return;
+                }
+                render();
+            } catch (err) {
+                // file:// blocks fetch(); say so instead of showing a blank page.
+                showMessage(`
+                    <strong class="block mb-2 text-stone-100">Impossibile caricare ${DATA_URL}</strong>
+                    ${err.message}<br><br>
+                    Apri questa pagina da un server locale, non con doppio clic:
+                    <code class="block mt-2 p-3 bg-white/5 rounded select-all">python3 -m http.server 8899</code>
+                    poi vai su <code>http://localhost:8899/</code>.
+                `);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

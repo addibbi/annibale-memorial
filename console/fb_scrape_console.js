@@ -65,6 +65,38 @@
    * render posts as bare children of the feed with NO article role, so those
    * are collected too (they still carry the message node).
    * ------------------------------------------------------------------------ */
+  const STORY_MSG =
+    'div[data-ad-comet-preview="message"], div[data-ad-preview="message"], div[data-ad-rendering-role="story_message"]';
+  const AUTHOR_LINK =
+    'h2 a[role="link"], h3 a[role="link"], h4 a[role="link"], h5 a[role="link"], strong a[role="link"]';
+
+  // The post's own header sits above its message, so the card must be the first
+  // ancestor that already contains an author link *preceding* that message.
+  // Climbing only until "some author link exists" grabbed the quoted post's
+  // author on shares and permalink pages.
+  function cardFor(el) {
+    let q = el;
+    for (let i = 0; i < 12 && q; i++, q = q.parentElement) {
+      if (q.matches('div[role="article"]')) return q;
+      for (const h of q.querySelectorAll(AUTHOR_LINK)) {
+        if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) return q;
+      }
+    }
+    return null;
+  }
+
+  // Where the collection is happening. The home feed is mostly noise — posts
+  // that never mention him — while a search for his name already implies a
+  // match somewhere, so clean() treats the two differently.
+  function sourceKind() {
+    const p = location.pathname;
+    const q = location.search;
+    if (p === '/' && !q) return 'feed';
+    if (/^\/search\//.test(p)) return 'search';
+    if (/\/(posts|permalink|photo|reel|videos)\//.test(p) || /story_fbid|fbid=/.test(q)) return 'post';
+    return 'page';
+  }
+
   function postContainers() {
     const out = [];
     for (const a of document.querySelectorAll('div[role="article"]')) {
@@ -84,7 +116,20 @@
         out.push(child);
       }
     }
-    return out;
+
+    // The current build renders feed, profile and permalink posts with neither
+    // role="article" nor role="feed", so the scans above miss them entirely.
+    // Anchor on the story message instead and climb to the post card: the
+    // nearest ancestor that carries an author link.
+    for (const m of document.querySelectorAll(STORY_MSG)) {
+      if (out.some((c) => c.contains(m))) continue;
+      const card = cardFor(m);
+      if (!card) continue;
+      // A comment's card is a nested article: same rule as above.
+      if (card.matches('div[role="article"]') && card.parentElement?.closest('div[role="article"]')) continue;
+      out.push(card);
+    }
+    return out.filter((c) => !out.some((o) => o !== c && o.contains(c)));
   }
 
   /* --------------------------------------------------------------------------
@@ -198,6 +243,38 @@
       }
       text = stripSeeMore(text);
 
+      // ---------------- shared (quoted) post ----------------
+      // A share often carries the only mention of the name: the sharer writes
+      // nothing, or writes about "te" without ever saying who. The quoted post
+      // is a further story message in the same card — flat on the current build,
+      // nested in an article on older markup. Without this the record keeps the
+      // sharer's words and silently loses the quoted text.
+      const ownMsgs = qs(STORY_MSG);
+      // A comment renders with the same message node, so a nested article is only
+      // a quoted post when it is not inside a comment list; anything else would
+      // put a stranger's comment in `shared_text` and fake the relevance check.
+      const commentBox = '[aria-label*="Comment" i], [aria-label*="commenti" i], ul[role="list"]';
+      const shareArticles = nested.filter((n) => !n.closest(commentBox));
+      const quotedMsgs = ownMsgs
+        .slice(1)
+        .concat(shareArticles.length ? Array.from(shareArticles[0].querySelectorAll(STORY_MSG)).slice(0, 1) : []);
+      let sharedText = null;
+      let sharedAuthor = null;
+      for (const m of quotedMsgs) {
+        const t = stripSeeMore(stripInvisible(m.innerText || '').trim());
+        if (!t || t === text || t.length > 20000) continue;
+        if (sharedText && t.length <= sharedText.length) continue;
+        sharedText = t;
+        // The quoted post's own header is the last author link before its message.
+        const before = Array.from(a.querySelectorAll(AUTHOR_LINK)).filter(
+          (h) => h.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING
+        );
+        const head = before.length
+          ? before[before.length - 1]
+          : m.closest('div[role="article"]')?.querySelector(AUTHOR_LINK);
+        sharedAuthor = head ? clean(head.innerText) || null : null;
+      }
+
       // ---------------- permalink + timestamp ----------------
       const linkEl = qs(
         'a[href*="/posts/"], a[href*="story_fbid"], a[href*="/permalink/"], a[href*="?fbid="], a[href*="/reel/"], a[href*="/videos/"]'
@@ -265,11 +342,14 @@
       posts.push({
         dom_index: posts.length,
         posinset: posinset ? parseInt(posinset, 10) : null,
+        source: sourceKind(),
         author: author,
         author_url: authorUrl,
         time_text: timeText,
         permalink: permalink,
         text: text,
+        shared_text: sharedText,
+        shared_author: sharedAuthor,
         reactions: numFrom(rMatch && rMatch[1]) ?? numFrom(reactionsSummary),
         reactions_summary: reactionsSummary,
         comments: numFrom(cMatch && cMatch[1]),
@@ -279,7 +359,8 @@
       });
     }
 
-    return posts;
+    // Layout wrappers that match a container but carry no post at all.
+    return posts.filter((p) => p.text || p.shared_text || p.media.length || p.permalink || p.author);
   }
 
   /* ---------------------------------------------------------------- state -- */
@@ -328,6 +409,63 @@
       fresh++;
     }
     return fresh;
+  }
+
+  /* ----------------------------------------------------------------- clean -- */
+  // Deletion is only for what is objectively not a post (ads, empty shells).
+  // Relevance is a *flag*, not a death sentence: a tribute often never writes the
+  // name ("Ancora non ci credo che te ne sia andato"), so deleting on the name
+  // alone lost five real memories in the audit. The presentation hides flagged
+  // rows; the data keeps them, and they can always be brought back.
+  const NAME_RE = /annibal|d['’`´]?\s?elia/i;
+  const MEMORIAL_RE =
+    /te ne (sia|sei) andat|non ti rivedr|mancherai|mi manchi|condoglianz|bollenti spiriti|principi attivi|ritorno al futuro|xyz2016|classe dirigente|dipartimento cultura|camera ardente|funerale|se ne va|scompars|prematura|lutto|56 anni|non ci credo|abbracc|ricord/i;
+
+  // NFKC first: Facebook renders the name in Unicode bold (𝗔𝗻𝗻𝗶𝗯𝗮𝗹𝗲), which no
+  // plain regex sees. A post with no words at all (photo only) is not judged:
+  // null means "unknown", never "irrelevant".
+  function relevant(p) {
+    const text = ((p.text || '') + ' ' + (p.shared_text || '')).trim().normalize('NFKC');
+    if (!text) return null;
+    return NAME_RE.test(text) || MEMORIAL_RE.test(text);
+  }
+
+  function clean() {
+    const before = posts.length;
+    const dropped = { ad: 0, empty: 0, dupe: 0, flagged: 0 };
+    const keep = [];
+    const seenText = new Set();
+    for (const p of posts) {
+      if (p.is_ad) { dropped.ad++; continue; }
+      // Same author + same words = the same post collected twice (a re-run on the
+      // same page can produce a slightly different hash id).
+      if (p.text) {
+        const key = ((p.author || '') + '|' + p.text.replace(/\s+/g, ' ').trim().toLowerCase()).normalize('NFKC');
+        if (seenText.has(key)) { dropped.dupe++; continue; }
+        seenText.add(key);
+      }
+      // Same condition as the extractor's own filter: a post that still carries an
+      // author or a permalink is not an empty shell — a shared photo with no
+      // caption can lose its media to the nested-article filter and look empty.
+      if (!p.text && !p.shared_text && !(p.media || []).length && !p.permalink && !p.author) {
+        dropped.empty++;
+        continue;
+      }
+      // Only the home feed gets hidden: a search or a profile was retrieved *for*
+      // him, and the friend's own selection is not ours to second-guess.
+      const verdict = relevant(p);
+      if (verdict === true) p.relevant = true;
+      else if (verdict === false && p.source === 'feed') { p.relevant = false; dropped.flagged++; }
+      keep.push(p);
+    }
+    posts.length = 0;
+    posts.push(...keep);
+    console.log(
+      `[fbScrape] clean: ${before} → ${posts.length} ` +
+      `(via ${dropped.ad} adv, ${dropped.empty} vuoti, ${dropped.dupe} duplicati; ` +
+      `${dropped.flagged} post di feed segnati relevant:false)`
+    );
+    return { before, after: posts.length, ...dropped };
   }
 
   /* ----------------------------------------------------------- durability -- */
@@ -443,7 +581,8 @@
 
   function saveCSV(name = 'fb_posts') {
     const cols = ['id', 'collected_at', 'author', 'author_url', 'time_text', 'permalink',
-      'reactions', 'comments', 'shares', 'media_count', 'media_urls', 'is_ad', 'posinset', 'text'];
+      'reactions', 'comments', 'shares', 'media_count', 'media_urls', 'is_ad', 'posinset',
+      'shared_author', 'text', 'shared_text'];
     const rows = [cols.join(',')];
     for (const p of posts) {
       const media = p.media || [];
@@ -451,7 +590,7 @@
         p.id, p.collected_at, p.author, p.author_url, p.time_text, p.permalink,
         p.reactions, p.comments, p.shares, media.length,
         media.map((m) => m.url || m.poster || '').join(' | '),
-        p.is_ad, p.posinset, p.text,
+        p.is_ad, p.posinset, p.shared_author, p.text, p.shared_text,
       ].map(csvCell).join(','));
     }
     // BOM so Excel reads the UTF-8 correctly.
@@ -485,6 +624,7 @@
         return 0;
       }
       const added = ingest(batch);
+      clean();
       persist(true);
       const total = saveJSON(name);
       console.log(
@@ -617,6 +757,7 @@
       }
     } finally {
       running = false;
+      clean();
       if (cfg.persist) persist(true);
       const secs = ((Date.now() - startedAt) / 1000).toFixed(0);
       console.log(
@@ -653,6 +794,8 @@
     savedInfo,
     extract: fbExtractPosts,     // one-off parse of the current DOM
     ingest,
+    clean,                       // drop ads/empty shells, flag relevance
+    relevant,                    // does a post look like a memory of him?
     expand: expandPosts,         // click every "See more" on screen
     scroller: pickScroller,      // debug helper: which element owns the overflow
     posts: () => posts,

@@ -3,6 +3,10 @@
 Questa cartella contiene una presentazione a schermo intero con tutti i
 messaggi e le foto raccolti da Facebook.
 
+**La presentazione è online qui:** https://tezzutezzu.github.io/annibale-memorial/
+
+Se invece hai la cartella sul computer, si apre come spiegato sotto.
+
 ---
 
 ## 1. Aprire la presentazione
@@ -23,7 +27,7 @@ comandi da copiare e incollare.
    aperta.
 4. Apri il browser e vai a questo indirizzo:
 
-   **http://localhost:8899/memorial_slideshow.html**
+   **http://localhost:8899/**
 
 La presentazione è partita. Quando hai finito, torna nel Terminale e premi
 <kbd>Ctrl</kbd>+<kbd>C</kbd> per chiuderla.
@@ -39,23 +43,33 @@ La presentazione è partita. Quando hai finito, torna nel Terminale e premi
 | <kbd>←</kbd> | ricordo precedente |
 | <kbd>Home</kbd> | torna al primo |
 | <kbd>End</kbd> | vai all'ultimo |
+| <kbd>⌘</kbd>+<kbd>K</kbd> | cerca un ricordo |
 
 - I messaggi lunghi si scorrono con la rotella del mouse, dentro la loro colonna:
   la pagina intera non si muove mai.
 - Se un ricordo non ha foto, il testo occupa tutto lo spazio.
 - In alto a destra c'è il conteggio, ad esempio `12 / 248`.
 
+### Cercare un ricordo
+
+In alto a destra c'è la casella **Cerca**: basta scrivere una parola o un nome.
+Si può cercare sia nel testo del messaggio sia nel nome di chi l'ha scritto, e
+non serve scrivere tutto: `bollenti spiriti`, `pisasale`, `cosi` (trova anche
+"così") funzionano. Sotto la casella compare un elenco con le frasi trovate:
+cliccane una (o premi <kbd>↓</kbd> e <kbd>Invio</kbd>) e la presentazione salta a
+quel ricordo.
+
 ## 3. Cosa c'è nella cartella
 
 ```
-memorial_slideshow.html   ← la presentazione (è questa che si apre)
+index.html                ← la presentazione (è questa che si apre)
 data/posts.jsonl          ← i testi dei messaggi
 data/media/               ← tutte le foto (una cartella per ricordo)
 data/posts.csv            ← la stessa roba in forma di foglio di calcolo
 ```
 
 La cartella si può copiare dove vuoi (anche su una chiavetta), ma
-`memorial_slideshow.html` deve restare dentro la cartella insieme a `data/`:
+`index.html` deve restare dentro la cartella insieme a `data/`:
 se lo sposti da solo, le foto non si trovano più.
 
 Le altre cose (`console/`, `import_console_dump.py`, `fbstore.py`,
