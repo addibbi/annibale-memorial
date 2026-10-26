@@ -75,10 +75,24 @@ accanto alla data: copia il link e compare la scritta *Link copiato*.
 Chi apre quel link arriva direttamente a quel ricordo, e ricaricando la pagina
 resta lì.
 
+### I video
+
+In alto a sinistra, sotto la scritta *PER ANNIBALE*, ci sono due pulsanti:
+**Ricordi** (la presentazione) e **Video**. La pagina dei video raccoglie gli
+interventi pubblici di Annibale, divisi per periodo (Puglia / Bollenti Spiriti,
+Milano / Comune di Milano) e in ordine cronologico.
+
+- Si clicca sull'immagine di un video e il video parte lì, dentro la pagina.
+- Le immagini sono solo un'anteprima: i video veri si caricano solo quando li
+  fai partire, così la pagina resta leggera.
+- L'icona in alto a destra di ogni scheda apre lo stesso video su YouTube.
+- Serve la connessione a internet: i video stanno su YouTube.
+
 ## 3. Cosa c'è nella cartella
 
 ```
 index.html                ← la presentazione (è questa che si apre)
+video.html                ← la pagina dei video
 data/posts.jsonl          ← i testi dei messaggi
 data/media/               ← tutte le foto (una cartella per ricordo)
 data/posts.csv            ← la stessa roba in forma di foglio di calcolo
