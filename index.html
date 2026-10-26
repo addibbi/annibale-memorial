@@ -184,13 +184,24 @@
                             </a>
                             <span id="date" class="block text-[0.7rem] text-stone-500 mt-1 uppercase tracking-wider"></span>
                         </div>
-                        <a id="permalink" href="#" target="_blank" rel="noopener noreferrer"
-                           class="shrink-0 text-stone-600 hover:text-stone-300 transition-colors"
-                           title="Apri il post originale">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                        </a>
+                        <div class="shrink-0 flex items-center gap-3">
+                            <button id="share" type="button"
+                                    class="text-stone-600 hover:text-stone-300 transition-colors cursor-pointer"
+                                    title="Copia il link a questo ricordo"
+                                    aria-label="Copia il link a questo ricordo">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M13.828 10.172a4 4 0 015.656 0l1.415 1.414a4 4 0 01-5.657 5.657l-1.414-1.414M10.172 13.828a4 4 0 01-5.657 0l-1.414-1.414a4 4 0 015.657-5.657l1.414 1.414M9 15l6-6" />
+                                </svg>
+                            </button>
+                            <a id="permalink" href="#" target="_blank" rel="noopener noreferrer"
+                               class="text-stone-600 hover:text-stone-300 transition-colors"
+                               title="Apri il post originale">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                            </a>
+                        </div>
                     </div>
                 </article>
             </div>
@@ -200,6 +211,14 @@
         <footer class="shrink-0 w-full py-3 md:py-4 px-6 text-center text-stone-500 text-xs font-light">
             <p id="hint">Premi <kbd>→</kbd> per il ricordo successivo</p>
         </footer>
+    </div>
+
+    <!-- Confirmation for "copy link" -->
+    <div id="toast" aria-live="polite"
+         class="pointer-events-none fixed inset-x-0 bottom-16 z-[60] flex justify-center
+                opacity-0 transition-opacity duration-200">
+        <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs
+                     text-stone-200 shadow-lg shadow-black/40 backdrop-blur"></span>
     </div>
 
     <script>
@@ -222,6 +241,8 @@
             search: document.getElementById('search'),
             searchWrap: document.getElementById('search-wrap'),
             results: document.getElementById('results'),
+            share: document.getElementById('share'),
+            toast: document.getElementById('toast'),
         };
 
         const state = { posts: [], i: 0 };
@@ -261,6 +282,7 @@
                         ? '\n\n↪ ' + (post.shared_author ? post.shared_author + ': ' : '') + shared
                         : '';
                     return {
+                        id: post.id,          // the slide's address: .../#<id>
                         text: own + quoted,
                         author: post.author || 'Anonimo',
                         authorUrl: post.author_url && post.author_url !== '#' ? post.author_url : null,
@@ -332,10 +354,84 @@
             if (next === state.i) return;
             state.i = next;
             render();
+            syncHash();
         }
 
         const nextPost = () => go(state.i + 1);
         const prevPost = () => go(state.i - 1);
+
+        /* =====================================================================
+           Deep links — every slide has its own address: #<post id>.
+           Send that URL and the recipient lands on that exact memory.
+           The address bar follows the slideshow via replaceState, so the back
+           button still leaves the site instead of walking back through posts.
+           ===================================================================== */
+        const hashId = () => {
+            const raw = (location.hash || '').replace(/^#/, '').trim();
+            try { return decodeURIComponent(raw); } catch { return raw; }
+        };
+
+        function syncHash() {
+            const post = state.posts[state.i];
+            if (!post || !post.id) return;
+            const want = '#' + post.id;
+            if (location.hash !== want) history.replaceState(null, '', want);
+        }
+
+        /** Jump to whatever the URL points at. False when there is no usable id. */
+        function goToHash() {
+            const id = hashId();
+            if (!id) return false;
+            const index = state.posts.findIndex(p => p.id === id);
+            if (index < 0) return false;
+            if (index !== state.i) {
+                state.i = index;
+                render();
+            }
+            return true;
+        }
+
+        // An id that no longer exists (or a typo) must not leave the address bar
+        // pointing at a slide that isn't on screen.
+        window.addEventListener('hashchange', () => { if (!goToHash()) syncHash(); });
+
+        let toastTimer = null;
+        function toast(message) {
+            const bubble = els.toast.firstElementChild;
+            if (!bubble) return;
+            bubble.textContent = message;
+            els.toast.classList.remove('opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => els.toast.classList.add('opacity-0'), 1900);
+        }
+
+        async function copyCurrentLink() {
+            const url = location.href;
+            try {
+                await navigator.clipboard.writeText(url);
+                toast('Link copiato');
+                return;
+            } catch { /* fall through: older browser or blocked permission */ }
+
+            const area = document.createElement('textarea');
+            area.value = url;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.opacity = '0';
+            document.body.appendChild(area);
+            area.select();
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch { ok = false; }
+            area.remove();
+            toast(ok ? 'Link copiato' : 'Copia il link dalla barra degli indirizzi');
+        }
+
+        if (els.share) {
+            els.share.addEventListener('click', (event) => {
+                event.preventDefault();
+                copyCurrentLink();
+            });
+        }
 
         /* =====================================================================
            Search — fuzzy, over the post text (including a share's quoted text)
@@ -653,7 +749,9 @@
                     showMessage('Nessun ricordo da mostrare.');
                     return;
                 }
-                render();
+                // A link like .../#fb_123 opens straight on that memory.
+                if (!goToHash()) render();
+                syncHash();
             } catch (err) {
                 // file:// blocks fetch(); say so instead of showing a blank page.
                 showMessage(`

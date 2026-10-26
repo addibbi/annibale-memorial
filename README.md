@@ -59,6 +59,22 @@ non serve scrivere tutto: `bollenti spiriti`, `pisasale`, `cosi` (trova anche
 cliccane una (o premi <kbd>↓</kbd> e <kbd>Invio</kbd>) e la presentazione salta a
 quel ricordo.
 
+### Mandare a qualcuno un ricordo preciso
+
+Ogni ricordo ha il suo indirizzo. Guarda la barra degli indirizzi: è qualcosa
+tipo
+
+```
+https://tezzutezzu.github.io/annibale-memorial/#fb_122107332044579405
+```
+
+L'indirizzo cambia da solo mentre scorri, quindi basta copiarlo per condividere
+il ricordo che hai davanti. In alternativa clicca l'icona a forma di catena
+accanto alla data: copia il link e compare la scritta *Link copiato*.
+
+Chi apre quel link arriva direttamente a quel ricordo, e ricaricando la pagina
+resta lì.
+
 ## 3. Cosa c'è nella cartella
 
 ```
