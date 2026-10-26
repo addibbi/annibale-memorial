@@ -282,18 +282,29 @@
       const permalink = linkEl ? normalizeUrl(linkEl.getAttribute('href')) : null;
 
       let timeText = null;
-      const TIME_RE = /(\d{1,2}:\d{2})|(yesterday|just now|about an hour|hrs?\b|mins?\b|hours? ago|minutes? ago|days? ago|weeks? ago|months? ago|years? ago)|(^\w{3,9} \d{1,2}(,? \d{4})?$)|(\d{4}-\d{2}-\d{2})/i;
+      // A post timestamp is short and looks like one of:
+      //   "3 h" · "ieri" · "24 ottobre 2026" · "12/05/2026" · "2 giorni fa"
+      // Image descriptions ("May be an image of…") and video durations
+      // ("0:00 / 2:15") are neither, and used to land in time_text.
+      const REL_TIME_RE = /^(?:\d{1,2}[./-]\d{1,2}(?:[./-]\d{2,4})?|\d{4}-\d{2}-\d{2}|oggi|ieri|yesterday|just now|\d+\s*(?:s|m|min|h|d|g|gg|ore|ora|giorni?|settimane?|mesi|anni|minutes?|hours?|days?|weeks?|months?|years?)(?:\s+(?:ago|fa))?)$/i;
+      const MONTH_RE = /\b(?:gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i;
+      const NOT_A_DATE_RE = /^(?:may be|might be|could be|potrebbe essere|no photo description|nessuna descrizione)/i;
+      const isTimeLabel = (value) => {
+        const t = clean(value);
+        if (!t || t.length > 40) return false;
+        if (NOT_A_DATE_RE.test(t)) return false;
+        if (REL_TIME_RE.test(t)) return true;
+        return /\d/.test(t) && MONTH_RE.test(t);   // "24 ottobre 2026"
+      };
       for (const el of qs('[aria-label]')) {
-        const l = clean(el.getAttribute('aria-label'));
-        if (!l || l.length > 90) continue;
-        if (TIME_RE.test(l)) {
-          timeText = l;
+        const l = el.getAttribute('aria-label');
+        if (isTimeLabel(l)) {
+          timeText = clean(l);
           break;
         }
       }
-      if (!timeText && linkEl) {
-        timeText = clean(linkEl.getAttribute('aria-label')) || clean(linkEl.innerText) || null;
-      }
+      // No fallback to linkEl.innerText: on this build that anchor wraps the
+      // photo, so its text is the image description, not a date.
 
       // ---------------- media ----------------
       const media = [];

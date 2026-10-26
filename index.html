@@ -287,10 +287,23 @@
             return parsePosts(await res.text());
         }
 
-        function formatDate(iso) {
-            if (!iso) return '';
-            const d = new Date(iso);
-            return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' });
+        /* ---------------------------------------------------------------- date --
+           `time_text` is Facebook's own stamp ("3 h", "24 ottobre 2026"). The
+           2026 build sometimes put the image description in that field instead
+           ("May be an image of…"), and older scrapes also let video durations
+           through. Neither is a date, so it is checked before being shown: a
+           wrong date is worse than no date. */
+        const TIME_LABEL_RE = /^(?:\d{1,2}[./-]\d{1,2}(?:[./-]\d{2,4})?|\d{4}-\d{2}-\d{2}|oggi|ieri|yesterday|just now|\d+\s*(?:s|m|min|h|d|g|gg|ore|ora|giorni?|settimane?|mesi|anni|minutes?|hours?|days?|weeks?|months?|years?)(?:\s+(?:ago|fa))?)$/i;
+        const MONTH_RE = /\b(?:gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i;
+        const NOT_A_DATE_RE = /^(?:may be|might be|could be|potrebbe essere|no photo description|nessuna descrizione)/i;
+
+        function dateLabel(post) {
+            const raw = (post.time_text || '').trim();
+            if (!raw || raw.length > 40) return '';
+            if (NOT_A_DATE_RE.test(raw)) return '';
+            if (TIME_LABEL_RE.test(raw)) return raw;
+            if (/\d/.test(raw) && MONTH_RE.test(raw)) return raw;   // "24 ottobre 2026"
+            return '';
         }
 
         /** Pick the fields the view needs; drop rows with neither words nor picture. */
@@ -316,7 +329,9 @@
                         permalink: post.permalink || null,
                         image: img ? (img.local_path || img.url) : null,
                         alt: (img && img.alt) || '',
-                        date: post.time_text || formatDate(post.collected_at),
+                        // Only a real post date; empty means "show nothing".
+                        // (collected_at is the day of the scrape, not the post.)
+                        date: dateLabel(post),
                     };
                 })
                 .filter(p => p.text || p.image);
@@ -341,6 +356,7 @@
             }
 
             els.date.textContent = post.date || '';
+            els.date.classList.toggle('hidden', !post.date);
 
             if (post.permalink) {
                 els.permalink.href = post.permalink;
@@ -650,7 +666,7 @@
                         <span class="min-w-0 flex-1">
                             <span class="flex items-baseline gap-2">
                                 <span class="text-stone-100 text-sm font-medium truncate">${esc(rec.rawAuthor)}</span>
-                                <span class="text-[0.6rem] text-stone-500 uppercase tracking-wider truncate max-w-[45%]">${esc(rec.date)}</span>
+                                ${rec.date ? `<span class="text-[0.6rem] text-stone-500 uppercase tracking-wider truncate max-w-[45%]">${esc(rec.date)}</span>` : ''}
                             </span>
                             <span class="mt-1 block text-[0.78rem] leading-snug text-stone-400">${highlighted(snippetFor(rec.raw))}</span>
                         </span>
