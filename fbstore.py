@@ -321,9 +321,14 @@ class RowMatcher:
 
 
 def _merge_relevance(a, b):
-    """`relevant` is a judgement, not a measurement: true beats unknown beats false."""
-    rank = {True: 2, None: 1, False: 0}
-    return {2: True, 1: None, 0: False}[max(rank.get(a, 1), rank.get(b, 1))]
+    """`relevant` is a judgement, not a measurement.
+
+    True beats everything (a memory named by any capture stays one), and an
+    explicit "no" beats "not judged", so a row taken out of the slideshow stays
+    out when the same post is captured again.
+    """
+    rank = {True: 2, False: 1, None: 0}
+    return {2: True, 1: False, 0: None}[max(rank.get(a, 0), rank.get(b, 0))]
 
 
 def _saved(item: dict) -> bool:
