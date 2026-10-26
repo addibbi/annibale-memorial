@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
-"""Import a JSON dump produced by console/fb_scrape_console.js.
+"""Merge a JSON dump produced by console/fb_scrape_console.js into the store.
 
 The console snippet collects posts inside your logged-in tab but cannot write
 image files (Chrome blocks bulk automatic downloads). This importer merges the
 dump into data/posts.jsonl and then reuses the tested downloader to fetch the
 images while the signed CDN URLs are still fresh.
 
+Importing is a merge, not an append: a post seen again is reconciled with the
+row already in the store (a full message replaces Facebook's "Altro..." preview,
+a fresh image URL replaces an expired one) and only genuinely new posts are
+added at the end.
+
 Usage:
     python3 import_console_dump.py ~/Downloads/fb_posts_2026-10-24T....json
+    python3 import_console_dump.py dump1.json dump2.json dump3.json
     python3 import_console_dump.py dump.json --media none
     python3 import_console_dump.py dump.json --media all
 
@@ -65,8 +71,15 @@ def normalise(posts: list[dict]) -> list[dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Merge a DevTools-console dump into posts.jsonl.")
-    ap.add_argument("dump", type=Path, help="JSON file downloaded by fbScrape.saveJSON()")
+    ap = argparse.ArgumentParser(
+        description="Merge DevTools-console dumps into posts.jsonl."
+    )
+    ap.add_argument(
+        "dump",
+        type=Path,
+        nargs="+",
+        help="JSON file(s) downloaded by fbScrape.saveJSON()",
+    )
     ap.add_argument(
         "--jsonl",
         type=Path,
@@ -85,30 +98,33 @@ def main(argv: list[str] | None = None) -> int:
 
     target: Path = args.jsonl.expanduser()
 
-    rows = normalise(load_dump(args.dump.expanduser()))
-    existing = fbs.load_seen(target)
-    fresh = [r for r in rows if r["id"] not in existing]
+    rows: list[dict] = []
+    for dump in args.dump:
+        rows.extend(normalise(load_dump(dump.expanduser())))
 
-    print(f"dump      : {len(rows)} posts")
-    print(f"in store  : {len(existing)} already")
-    print(f"new       : {len(fresh)}")
+    existing = fbs.load_rows(target)
+    report = fbs.merge_posts(existing, rows)
 
-    if not fresh:
-        print("nothing to import")
-    else:
-        fbs.append_jsonl(target, fresh)
+    print(f"dump      : {len(args.dump)} file(s), {len(rows)} posts")
+    print(f"in store  : {len(existing) - report['appended']} rows before")
+    if report["duplicates"]:
+        print(f"repeats   : {report['duplicates']} posts captured twice in the dumps")
+    if report["matched"]:
+        how = ", ".join(f"{n} by {k}" for k, n in sorted(report["matched"].items()))
+        print(f"matched   : {sum(report['matched'].values())} already stored ({how})")
+        print(f"updated   : {report['updated']} rows, {report['unchanged']} already complete")
+        if report["fields"]:
+            fields = ", ".join(f"{k} {n}" for k, n in report["fields"].most_common())
+            print(f"  changed : {fields}")
+    print(f"new       : {report['appended']} posts appended")
 
+    written = fbs.write_jsonl(target, existing)
     csv_path = target.with_suffix(".csv")
-    written = fbs.export_csv(target, csv_path)
+    fbs.export_csv(target, csv_path)
     print(f"jsonl     : {target}  ({written} rows)")
     print(f"csv       : {csv_path}")
 
-    if args.media == "none" or not fresh:
-        return 0
-
-    with_media = sum(1 for r in fresh if r.get("media"))
-    if not with_media:
-        print("media     : none of the new posts carry media")
+    if args.media == "none":
         return 0
 
     # Playwright's request client needs no browser; it gives us the same .get()

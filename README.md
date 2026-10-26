@@ -147,9 +147,19 @@ Si fa in due passi.
    python3 import_console_dump.py ~/Downloads/fb_posts_NOME_DEL_FILE.json
    ```
 
-   I nuovi messaggi si aggiungono agli altri e le foto vengono scaricate nella
-   cartella giusta. Se compare il messaggio che manca `playwright`, si può
-   importare solo il testo con `--media none`, oppure installarlo una volta sola:
+   Si possono passare più file in una volta:
+
+   ```
+   python3 import_console_dump.py ~/Downloads/fb_posts_ricerca_*.json ~/Downloads/fb_posts_feed_*.json
+   ```
+
+   L'importazione è una **fusione**, non un'aggiunta: i ricordi già presenti
+   vengono aggiornati (un messaggio intero sostituisce l'anteprima tagliata da
+   Facebook, un collegamento fresco sostituisce una foto scaduta) e solo quelli
+   nuovi vengono aggiunti in fondo. Rilanciare lo stesso file non cambia niente.
+   Le foto vengono scaricate nella cartella giusta. Se compare il messaggio che
+   manca `playwright`, si può importare solo il testo con `--media none`, oppure
+   installarlo una volta sola:
 
    ```
    python3 -m venv .venv
