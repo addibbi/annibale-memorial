@@ -51,6 +51,10 @@
 
         #photo-controls[hidden] { display: none; }
 
+        /* Handle horizontal photo swipes while keeping native vertical pans
+           and pinch zoom. This applies only to the image area, not the text. */
+        #photo-frame { touch-action: pan-y pinch-zoom; }
+
         .photo {
             position: absolute;
             inset: 0;
@@ -179,7 +183,7 @@
 
                 <!-- Image, left -->
                 <figure id="figure" class="relative h-full min-h-[38vh] md:min-h-0">
-                    <div class="relative flex-1 min-h-0 w-full">
+                    <div id="photo-frame" class="relative flex-1 min-h-0 w-full">
                         <img id="photo" class="photo" alt="">
                     </div>
                     <figcaption id="photo-controls" hidden
@@ -291,6 +295,7 @@
             grid: document.getElementById('grid'),
             figure: document.getElementById('figure'),
             photo: document.getElementById('photo'),
+            photoFrame: document.getElementById('photo-frame'),
             photoControls: document.getElementById('photo-controls'),
             photoPrev: document.getElementById('photo-prev'),
             photoNext: document.getElementById('photo-next'),
@@ -416,6 +421,38 @@
 
         els.photoPrev.addEventListener('click', () => goPhoto(state.photoIndex - 1));
         els.photoNext.addEventListener('click', () => goPhoto(state.photoIndex + 1));
+
+        let photoSwipe = null;
+        els.photoFrame.addEventListener('pointerdown', (event) => {
+            if (event.pointerType !== 'touch') return;
+            photoSwipe = null;
+            const post = state.posts[state.i];
+            if (!event.isPrimary || !post || post.images.length < 2) return;
+            photoSwipe = {
+                pointerId: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+                post,
+                photoIndex: state.photoIndex,
+            };
+            els.photoFrame.setPointerCapture(event.pointerId);
+        });
+        els.photoFrame.addEventListener('pointerup', (event) => {
+            const swipe = photoSwipe;
+            photoSwipe = null;
+            if (!swipe || swipe.pointerId !== event.pointerId
+                || swipe.post !== state.posts[state.i]
+                || swipe.photoIndex !== state.photoIndex) return;
+            const dx = event.clientX - swipe.x;
+            const dy = event.clientY - swipe.y;
+            // Ignore taps, short movements and predominantly vertical gestures.
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            goPhoto(state.photoIndex + (dx < 0 ? 1 : -1));
+        });
+        const cancelPhotoSwipe = () => { photoSwipe = null; };
+        els.photoFrame.addEventListener('pointercancel', cancelPhotoSwipe);
+        els.photoFrame.addEventListener('lostpointercapture', cancelPhotoSwipe);
+
         // Arrow keys on the gallery controls change photos; elsewhere they
         // keep navigating memories. Enter/Space activate the focused button.
         els.photoControls.addEventListener('keydown', (event) => {

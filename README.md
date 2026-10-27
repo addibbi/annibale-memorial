@@ -56,6 +56,10 @@ Se un ricordo contiene più foto, sotto l'immagine compaiono due frecce e il
 conteggio **Foto 1 / 3**. Le frecce scorrono tutte le foto di quel ricordo;
 quelle in fondo alla pagina continuano a cambiare ricordo.
 
+Su smartphone e tablet puoi anche **scorrere il dito sulla foto**: verso sinistra
+per la foto successiva, verso destra per la precedente. Il testo continua a
+scorrere verticalmente nella propria area.
+
 Puoi usare anche la tastiera: premi <kbd>Tab</kbd> per raggiungere le frecce
 delle foto, poi <kbd>←</kbd> e <kbd>→</kbd> per sfogliarle. Fuori da questi
 comandi, le frecce della tastiera continuano a cambiare ricordo.
