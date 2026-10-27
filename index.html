@@ -45,7 +45,11 @@
         #figure {
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
+
+        #photo-controls[hidden] { display: none; }
 
         .photo {
             position: absolute;
@@ -175,7 +179,30 @@
 
                 <!-- Image, left -->
                 <figure id="figure" class="relative h-full min-h-[38vh] md:min-h-0">
-                    <img id="photo" class="photo" alt="">
+                    <div class="relative flex-1 min-h-0 w-full">
+                        <img id="photo" class="photo" alt="">
+                    </div>
+                    <figcaption id="photo-controls" hidden
+                                class="shrink-0 flex items-center justify-center gap-4 pt-2"
+                                role="group" aria-label="Foto di questo ricordo">
+                        <button id="photo-prev" type="button" aria-label="Foto precedente" aria-controls="photo"
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10
+                                       bg-white/5 text-stone-300 hover:bg-white/10 focus-visible:outline focus-visible:outline-2
+                                       focus-visible:outline-stone-300 disabled:opacity-25 disabled:cursor-default">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <span id="photo-counter" class="text-sm text-stone-400 tabular-nums" aria-live="polite" aria-atomic="true"></span>
+                        <button id="photo-next" type="button" aria-label="Foto successiva" aria-controls="photo"
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10
+                                       bg-white/5 text-stone-300 hover:bg-white/10 focus-visible:outline focus-visible:outline-2
+                                       focus-visible:outline-stone-300 disabled:opacity-25 disabled:cursor-default">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7" />
+                            </svg>
+                        </button>
+                    </figcaption>
                 </figure>
 
                 <!-- Text, right -->
@@ -264,6 +291,10 @@
             grid: document.getElementById('grid'),
             figure: document.getElementById('figure'),
             photo: document.getElementById('photo'),
+            photoControls: document.getElementById('photo-controls'),
+            photoPrev: document.getElementById('photo-prev'),
+            photoNext: document.getElementById('photo-next'),
+            photoCounter: document.getElementById('photo-counter'),
             card: document.getElementById('card'),
             text: document.getElementById('text'),
             author: document.getElementById('author'),
@@ -281,7 +312,7 @@
             toast: document.getElementById('toast'),
         };
 
-        const state = { posts: [], i: 0 };
+        const state = { posts: [], i: 0, photoIndex: 0 };
 
         function parsePosts(text) {
             const trimmed = text.trim();
@@ -322,7 +353,9 @@
                 // data and come back by clearing `relevant`.
                 .filter(post => post.relevant !== false)
                 .map(post => {
-                    const img = (post.media || []).find(m => m.type === 'image' && (m.local_path || m.url));
+                    const images = (post.media || [])
+                        .filter(m => m.type === 'image' && (m.local_path || m.url))
+                        .map(m => ({ src: m.local_path || m.url, alt: m.alt || '' }));
                     // A share often names Annibale only in the quoted post; without
                     // this the slide loses the only mention.
                     const own = (post.text || '').trim();
@@ -336,8 +369,8 @@
                         author: post.author || 'Anonimo',
                         authorUrl: post.author_url && post.author_url !== '#' ? post.author_url : null,
                         permalink: post.permalink || null,
-                        image: img ? (img.local_path || img.url) : null,
-                        alt: (img && img.alt) || '',
+                        images,
+                        image: images.length ? images[0].src : null, // search thumbnail
                         // Only a real post date; empty means "show nothing".
                         // (collected_at is the day of the scrape, not the post.)
                         date: dateLabel(post),
@@ -346,9 +379,51 @@
                 .filter(p => p.text || p.image);
         }
 
-        function preload(post) {
-            if (post && post.image) new Image().src = post.image;
+        function preload(post, photoIndex = 0) {
+            const image = post && post.images[photoIndex];
+            if (image) new Image().src = image.src;
         }
+
+        function renderPhoto() {
+            const post = state.posts[state.i];
+            if (!post) return;
+            const image = post.images[state.photoIndex];
+            els.grid.classList.toggle('no-image', !image);
+            if (image) {
+                els.photo.src = image.src;
+                els.photo.alt = image.alt;
+            } else {
+                els.photo.removeAttribute('src');
+                els.photo.alt = '';
+            }
+
+            els.photoControls.hidden = post.images.length <= 1;
+            els.photoPrev.disabled = state.photoIndex <= 0;
+            els.photoNext.disabled = state.photoIndex >= post.images.length - 1;
+            els.photoCounter.textContent = post.images.length > 1
+                ? `Foto ${state.photoIndex + 1} / ${post.images.length}` : '';
+            preload(post, state.photoIndex + 1);
+        }
+
+        function goPhoto(index) {
+            const post = state.posts[state.i];
+            if (!post || !post.images.length) return;
+            const next = Math.max(0, Math.min(index, post.images.length - 1));
+            if (next === state.photoIndex) return;
+            state.photoIndex = next;
+            renderPhoto();
+        }
+
+        els.photoPrev.addEventListener('click', () => goPhoto(state.photoIndex - 1));
+        els.photoNext.addEventListener('click', () => goPhoto(state.photoIndex + 1));
+        // Arrow keys on the gallery controls change photos; elsewhere they
+        // keep navigating memories. Enter/Space activate the focused button.
+        els.photoControls.addEventListener('keydown', (event) => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            event.stopPropagation();
+            goPhoto(state.photoIndex + (event.key === 'ArrowRight' ? 1 : -1));
+        });
 
         function applyPostMeta(post) {
             // textContent, so nothing written on Facebook is treated as markup.
@@ -379,16 +454,7 @@
             const post = state.posts[state.i];
             if (!post) return;
 
-            els.grid.classList.toggle('no-image', !post.image);
-
-            if (post.image) {
-                els.photo.src = post.image;
-                els.photo.alt = post.alt || '';
-            } else {
-                els.photo.removeAttribute('src');
-                els.photo.alt = '';
-            }
-
+            renderPhoto();
             applyPostMeta(post);
 
             els.counter.textContent = `${state.i + 1} / ${state.posts.length}`;
@@ -410,6 +476,7 @@
             const next = Math.max(0, Math.min(index, state.posts.length - 1));
             if (next === state.i) return;
             state.i = next;
+            state.photoIndex = 0;
             render();
             syncHash();
         }
@@ -452,6 +519,7 @@
             if (index < 0) return false;
             if (index !== state.i) {
                 state.i = index;
+                state.photoIndex = 0;
                 render();
             }
             return true;
